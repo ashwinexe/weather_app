@@ -1,14 +1,30 @@
 import React, { useState } from 'react'
 import Conditions from '../Conditions/Conditions';
+import classes from './Forecast.module.css'
+
 const Forecast = () => {
     let [city, setCity] = useState('')
     let [unit, setUnit] = useState('metric');
     let [responseObj, setResponseObj] = useState({});
-    
-    const uriEncodedCity = encodeURIComponent(city);
+    let [error, setError] = useState(false);
+    let [loading, setLoading] = useState(false);
+
+
+    // const uriEncodedCity = encodeURIComponent(city);
     
     function getForecast(e) {
         e.preventDefault();
+
+        if (city.length === 0)
+        {
+            return setError(true)
+        }
+        setError(false);
+        setResponseObj({});
+        
+        setLoading(true);
+
+        let uriEncodedCity = encodeURIComponent(city);
         //weather data fetch
         fetch(`https://community-open-weather-map.p.rapidapi.com/weather?units=${unit}&q=${uriEncodedCity}`, {
 	"method": "GET",
@@ -17,10 +33,20 @@ const Forecast = () => {
 		"x-rapidapi-host": "community-open-weather-map.p.rapidapi.com"
 	}
 })//fetch
-        
+   
     .then(response => response.json())
     .then(response => {
+        if(response.cod !== 200)
+        {
+            throw new Error()
+        }
         setResponseObj(response)
+        setLoading(false);
+    })
+    .catch(err => {
+        setError(true);
+        setLoading(false);
+        console.log(err.message);
     })
     }//getforecast
 
@@ -33,10 +59,11 @@ const Forecast = () => {
                     type="text"
                     placeholder="Enter City"
                     maxLength="50"
+                    className = {classes.TextInput}
                     value = {city}
                     onChange={(e) => setCity(e.target.value)} 
                     />
-                    <label>
+                    <label className={classes.Radio}>
                         <input 
                             type="radio"
                             name="units"
@@ -46,7 +73,7 @@ const Forecast = () => {
                             />
                             Celcius
                     </label>
-                    <label>
+                    <label className={classes.Radio}>
                         <input 
                             type="radio"
                             name="units"
@@ -54,11 +81,15 @@ const Forecast = () => {
                             value = "imperial"
                             onChange={(e) => setUnit(e.target.value)}
                             />
-                            Farenheit
+                            Farenheitn
                     </label>
-                    <button type="submit">Get Forecast</button>
+                    <button type="submit" className={classes.Button}>Get Forecast</button>
             </form>
-            <Conditions responseObj={responseObj} />
+            <Conditions 
+            responseObj={responseObj} 
+            error = {error}
+            loading = {loading}
+            />
         </div>
     )
 }
